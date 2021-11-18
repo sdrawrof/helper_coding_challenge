@@ -28,6 +28,7 @@
 ### Start of program ###
 import pandas as pd
 import numpy as np
+from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
 
 #import carers data from csv file
@@ -39,5 +40,6 @@ carer_data = pd.read_csv('data.csv')
 
 # YEARS OF EXPERIENCE
 # Extract and normalise data
-n_years_exp = min_max_scaler.transform(carer_data['years_experience'].to_numpy().tolist()) # extract years experience column
+min_max_scaler = preprocessing.MinMaxScaler()
+n_years_exp = min_max_scaler.fit_transform(carer_data['years_experience'].to_numpy().tolist()) # extract years experience column
 print(n_years_exp)
