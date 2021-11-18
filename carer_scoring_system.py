@@ -17,7 +17,7 @@
 
 ##### Notes to organise later! ######
 # The fields included as values are all independent, and the rest of the fields are dependent on these ones
-# #I decided on the values based on imprtance of each field by comparing fields to each other based on the number of edge cases. 
+# I decided on the values based on imprtance of each field by research, and by comparing fields to each other based on the number of edge cases. 
 # e.g. A user with many years of experience but a low no of previous clients is still good. 
 # Meaning years experince is significantly more important that no of previous clients on the app.
 # For some fields, the differnce between values is not that important. If these fields need to be used to affect other values 
@@ -44,3 +44,7 @@ min_max_scaler = preprocessing.MinMaxScaler() #create a scaler object
 years_exp = np.array(carer_data['years_experience']).reshape((len(carer_data['years_experience']), 1)) # extract years experience column and make it a 2d list/array
 n_years_exp = min_max_scaler.fit_transform(years_exp)*100 # fit and then normalise values, and then multiply by 100 to get score
 print(n_years_exp)
+
+# AVERAGE REVIEW
+# Extract and modify according to the number of reviews, i.e. if the number of reviews are 0, take one point off. Then normalise data
+avg_num_reviews = carer_data[['avg_review','num_reviews']] # extract years experience column and make it a 2d list/array
