@@ -40,6 +40,7 @@ carer_data = pd.read_csv('data.csv')
 
 # YEARS OF EXPERIENCE
 # Extract and normalise data
-min_max_scaler = preprocessing.MinMaxScaler()
-n_years_exp = min_max_scaler.fit_transform(carer_data['years_experience'].to_numpy().tolist()) # extract years experience column
+min_max_scaler = preprocessing.MinMaxScaler() #create a scaler object
+years_exp = np.array(carer_data['years_experience']).reshape((len(carer_data['years_experience']), 1)) # extract years experience column and make it a 2d list/array
+n_years_exp = min_max_scaler.fit_transform(years_exp)*100 # fit and then normalise values, and then multiply by 100 to get score
 print(n_years_exp)
