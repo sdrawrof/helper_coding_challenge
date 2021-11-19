@@ -599,4 +599,3 @@ id,first_name,last_name,num_reviews,avg_review,img_problems,type,num_previous_cl
 598,Thomas,Stark,2,4.72,5,basic,0,35,43,11
 599,Abraham,Sams,3,3.88,3,expert,0,8,27,14
 600,Raymond,Gardner,0,0.57,4,expert,2,35,35,11
-,,,,,,,,16.91166667,,
