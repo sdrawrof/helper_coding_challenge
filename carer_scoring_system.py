@@ -28,6 +28,7 @@
 
 
 ### Start of program ###
+from numpy.core.numeric import tensordot
 import pandas as pd
 import numpy as np
 from sklearn import preprocessing
@@ -54,9 +55,9 @@ avg_num_reviews = np.array(carer_data[['num_reviews','avg_review']]) # extract y
 avg_num_reviews[avg_num_reviews[:, 0] == 0, 1] = avg_num_reviews[avg_num_reviews[:, 0] == 0, 1] - 1 # if the number of reviews is 0, reduce the average review score by 1 point
 print("\n\nAverage and number of review ")
 print(avg_num_reviews)
-n__average_rev = min_max_scaler.fit_transform(np.array(avg_num_reviews[:, 1]).reshape((len(avg_num_reviews[:, 1]), 1)))*100 # fit and then normalise values, and then multiply by 100 to get score
+n_average_rev = min_max_scaler.fit_transform(np.array(avg_num_reviews[:, 1]).reshape((len(avg_num_reviews[:, 1]), 1)))*100 # fit and then normalise values, and then multiply by 100 to get score
 print("\n\nNormalised Average review ")
-print(n__average_rev)
+print(n_average_rev)
 
 # NUMBER OF PREVIOUS CLIENTS
 # Extract and normalise data
@@ -83,7 +84,7 @@ days_prev_clients[np.logical_and(days_prev_clients[:, 0] == 0, days_prev_clients
 print("\n\n Number previous clients and Days since last login : ")
 print(days_prev_clients)
 n_days_since_log = (1-min_max_scaler.fit_transform(days_prev_clients[:, 1].reshape(len(days_prev_clients[:, 1]),1))) * 25
-print("\n\n Normalised Days since last logon")
+print("\n\nNormalised Days since last logon")
 print(n_days_since_log)
 
 # IMAGE PROBLEMS
@@ -92,4 +93,17 @@ n_image_probs = (1-min_max_scaler.fit_transform(img_problems)) * 25
 print("\n\nNormalised Image Problems")
 print(n_image_probs)
 
-#Total_scores = [n_years_exp + n__average_rev + n_num_previous_cli + n_days_since_log + n_image_probs]
+#combine all the arrays together to make a big scoreboard
+#scores = [n_years_exp, n__average_rev, n_num_previous_cli, n_days_since_log, n_image_probs]
+score_board = np.hstack((np.array(carer_data[['id', 'first_name', 'last_name']]), n_years_exp, n_average_rev, n_num_previous_cli, n_days_since_log, n_image_probs)) # create large scoreboard with individual scores for each field
+print("\n\n\nScore_board")
+print(score_board)
+
+#From this, calculate the total score and sort by score
+sum_scores = score_board[:,3] + score_board[:,4] + score_board[:,5] + score_board[:,6] + score_board[:,7]  # add all the scores together
+score_board = np.c_[score_board, sum_scores] # append the total on the end of the scoreboard (for checking reasons)
+sorted_scores = score_board[np.argsort(sum_scores)][::-1] # sort the carers by total score
+print("\n\n\n FINAL SORTED SCORES")
+print(sorted_scores)
+sorted_scores = np.vstack((["id", "first_name", "last_name", "total_score"], sorted_scores[:, [0,1,2,8]]))
+np.savetxt("Best_carers_scoresheet.csv", sorted_scores, delimiter=",", fmt="%s") # save final scores in file
