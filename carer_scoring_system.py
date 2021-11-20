@@ -1,5 +1,14 @@
-# ------------------------------------------------------------
+# 
 # Written by Adia-May Macheny for the Helper.Community Coding Challenge
+# 
+# Two Errors in the data were identified. There were:
+#  1. Some carers have an average review despite number of reviews being zero.
+#     To reduce the impact of this on data I reduce carers with no reviews by
+#     1 star,
+#     although in relaity this may need to be mdofied further.
+#  2. Number of reviews is sometimes higher than number of previous clients.
+#
+# 
 #  #### Notes to organise later! ######
 # The fields included as values are all independent, and the rest of the fields
 #  are dependent on these ones
@@ -19,82 +28,155 @@
 
 # REMOVE EXTRA UNNORMALISED VARIABLES IF NOT NEEDED
 
-from numpy.core.numeric import tensordot
+
 import pandas as pd
 import numpy as np
+from numpy.core.numeric import tensordot
 from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
 
-# import carers data from csv file
-carer_data = pd.read_csv('data.csv')
 
-# YEARS OF EXPERIENCE
-# Extract and normalise data
-min_max_scaler = preprocessing.MinMaxScaler() #create a scaler object
-years_exp = np.array(carer_data['years_experience']).reshape((len(carer_data['years_experience']), 1))  # extract years experience column and make it a 2d list/array
-n_years_exp = min_max_scaler.fit_transform(years_exp) * 100 # fit and then normalise values, and then multiply by 100 to get score
-print("\n\nNormalised Years experience: \n")
-print(n_years_exp)
+class CarerScorer:
+    carer_data = pd.read_csv("data.csv")
+    min_max_scaler = preprocessing.MinMaxScaler()
 
-# AVERAGE REVIEW
-# Extract and modify according to the number of reviews, i.e. if the number of reviews are 0, take one point off. Then normalise data
-avg_num_reviews = np.array(carer_data[['num_reviews', 'avg_review']]) # extract years experience column and make it a 2d list/array
-avg_num_reviews[avg_num_reviews[:, 0] == 0, 1] = avg_num_reviews[avg_num_reviews[:, 0] == 0, 1] - 1 # if the number of reviews is 0, reduce the average review score by 1 point
-print("\n\nAverage and number of review ")
-print(avg_num_reviews)
-n_average_rev = min_max_scaler.fit_transform(np.array(avg_num_reviews[:, 1]).reshape((len(avg_num_reviews[:, 1]), 1)))*100 # fit and then normalise values, and then multiply by 100 to get score
-print("\n\nNormalised Average review ")
-print(n_average_rev)
+    # YEARS OF EXPERIENCE
+    # Years of experience are converted into a score out of 100
+    def calc_years_experience(self):
+        # extract years_experience column
+        years_exp = np.array(self.carer_data['years_experience']).reshape(
+            (len(self.carer_data['years_experience']), 1))
+        # fit and then normalise values, then * 100 for score
+        n_years_exp = self.min_max_scaler.fit_transform(years_exp) * 100
+        print(np.ndim(n_years_exp))
+        return(n_years_exp)
 
-# NUMBER OF PREVIOUS CLIENTS
-# Extract and normalise data
-# # This has less of an impact becuase say they have 0 previous clients but have 20 years experience, they are still very suited! but experience through the app is still important
-# because the brand may require different things, and it is more reliable
-num_prev_clients = np.array(carer_data['num_previous_clients']).reshape((len(carer_data['num_previous_clients']), 1)) # extract no previous clients column and make it a 2d list/array
-n_num_previous_cli = min_max_scaler.fit_transform(num_prev_clients) * 50 # fit and then normalise values, and then multiply by 50 to get score
-print("\n\nNumber of Previous Clients: \n")
-print(n_num_previous_cli)
+    # AVERAGE REVIEW
+    # Scored out of 100. See above notes for mitigation for users with zero number of reviews
+    def calc_average_review(self):
+        # extract average reviews and number of reviews columns
+        avg_num_reviews = np.array(self.carer_data[['num_reviews', 'avg_review']])
+        # replace average review with value one point lower if num_review is 0
+        avg_num_reviews[avg_num_reviews[:, 0] == 0, 1] = avg_num_reviews[
+            avg_num_reviews[:, 0] == 0, 1] - 1
+        # fit and then normalise values, and then * 100 to get score
+        n_average_rev = self.min_max_scaler.fit_transform(
+            np.array(avg_num_reviews[:, 1]).reshape(
+                (len(avg_num_reviews[:, 1]),
+                 1)))*100
+        print(np.ndim(n_average_rev))
+        return(n_average_rev)
 
-# DAYS SINCE LAST LOGON
-# Extract data, and modify according to the number of previous clients to create
-#  a greater disparity between those who have logged in a while ago
-#  due to having current clients,
-# and those who have had no clients and signed up for the banter
-days_since_log = np.array(carer_data['days_since_login']) # extract days since logon
-mean_login = np.mean(days_since_log) # get average logon time
-three_quart_percentile = np.percentile(days_since_log, 75) # get lower percentile logon time
-print("\n\nMean login time is ")
-print(mean_login)
-print("\n\n75 percent login time is ")
-print(three_quart_percentile)
-days_prev_clients = np.array(carer_data[['num_previous_clients', 'days_since_login']])
-days_prev_clients[np.logical_and(days_prev_clients[:, 0] == 0, days_prev_clients[:, 1] > mean_login, days_prev_clients[:, 1] <= three_quart_percentile), 1] = days_prev_clients[np.logical_and(days_prev_clients[:, 0] == 0, days_prev_clients[:, 1] > mean_login, days_prev_clients[:, 1] <= three_quart_percentile), 1] * 2 # if no of previous clients is 0, make the days since last login half if it is greater than the average
-days_prev_clients[np.logical_and(days_prev_clients[:, 0] == 0, days_prev_clients[:, 1] > three_quart_percentile), 1] = days_prev_clients[np.logical_and(days_prev_clients[:, 0] == 0, days_prev_clients[:, 1] > three_quart_percentile), 1] *4 # if no of previous clients is 0, make the days since last login a quarter if it is greater than the quarter
-print("\n\n Number previous clients and Days since last login : ")
-print(days_prev_clients)
-n_days_since_log = (1-min_max_scaler.fit_transform(days_prev_clients[:, 1].reshape(len(days_prev_clients[:, 1]), 1))) * 25
-print("\n\nNormalised Days since last logon")
-print(n_days_since_log)
+    # NUMBER OF PREVIOUS CLIENTS
+    # Scored out of 50, as carers may have had previous clients before joining
+    # But is still important if the brand requires certain traits in cariers,
+    # And is also more reliable than years experience
+    def calc_num_prev_clients(self):
+        # extract no previous clients column
+        num_prev_clients = np.array(self.carer_data['num_previous_clients']).reshape(
+            (len(self.carer_data['num_previous_clients']), 1))
+        # fit and normalise values, and then multiply by 50
+        n_num_previous_cli = self.min_max_scaler.fit_transform(num_prev_clients) * 50
+        print(np.ndim(n_num_previous_cli))
+        return(n_num_previous_cli)
 
-# IMAGE PROBLEMS
-img_problems = num_prev_clients = np.array(carer_data['img_problems']).reshape((len(carer_data['img_problems']), 1))
-n_image_probs = (1-min_max_scaler.fit_transform(img_problems)) * 25
-print("\n\nNormalised Image Problems")
-print(n_image_probs)
+    # DAYS SINCE LAST LOGON
+    # Score is out of 25
+    # Data is modifies according to the number of previous clients to create
+    # a greater disparity between those who have logged in a while ago
+    # due to having current clients,
+    # and those who have had no clients and have likely not logged in since signing up
+    def calc_days_since_logon(self):
+        # extract days since logon column
+        days_since_log = np.array(self.carer_data['days_since_login'])
+        # Get average and upper percentile logon times
+        mean_login = np.mean(days_since_log)
+        three_quart_percentile = np.percentile(days_since_log, 75)
+        days_prev_clients = np.array(self.carer_data[['num_previous_clients', 'days_since_login']])
+        # If no of previous clients is 0 and logon time is above agerage, double the days since logon
+        days_prev_clients[np.logical_and(days_prev_clients[:, 0] == 0,
+                          days_prev_clients[:, 1] > mean_login,
+                          days_prev_clients[:, 1] <= three_quart_percentile), 1] = days_prev_clients[
+                               np.logical_and(
+                                   days_prev_clients[:, 0] == 0,
+                                   days_prev_clients[:, 1] > mean_login,
+                                   days_prev_clients[:, 1] <= three_quart_percentile
+                               ),
+                               1] * 2
+        # If no of previous clients is 0 and logon time is above 75%, quadruple the days since logon
+        days_prev_clients[np.logical_and(days_prev_clients[:, 0] == 0, 
+                          days_prev_clients[:, 1] > three_quart_percentile), 1] = days_prev_clients[
+                              np.logical_and(
+                                  days_prev_clients[:, 0] == 0,
+                                  days_prev_clients[:, 1] > three_quart_percentile
+                              ), 1] * 4
+        n_days_since_log = (1 - self.min_max_scaler.fit_transform(
+                          days_prev_clients[:, 1].reshape(len(days_prev_clients[:, 1]), 1)
+                          )) * 25
+        print(np.ndim(n_days_since_log))
+        return(n_days_since_log)
 
-#combine all the arrays together to make a big scoreboard
-#scores = [n_years_exp, n__average_rev, n_num_previous_cli, n_days_since_log, n_image_probs]
-score_board = np.hstack((np.array(carer_data[['id', 'first_name', 'last_name', 'num_reviews', 'avg_review',
-'img_problems', 'type', 'num_previous_clients', 'days_since_login', 'age', 'years_experience']]), n_years_exp, n_average_rev, n_num_previous_cli, n_days_since_log, n_image_probs)) # create large scoreboard with individual scores for each field
-print("\n\n\nScore_board")
-print(score_board)
+    # IMAGE PROBLEMS
+    # Score is out of 25
+    def calc_image_problems(self):
+        img_problems = num_prev_clients = np.array(
+            self.carer_data['img_problems']).reshape(
+                (len(self.carer_data['img_problems']), 1))
+        n_image_probs = (1 - self.min_max_scaler.fit_transform(img_problems)) * 25
+        print(np.ndim(n_image_probs))
+        return n_image_probs
 
-# From this, calculate the total score and sort by score
-sum_scores = score_board[:, 11] + score_board[:, 12] + score_board[:, 13] + score_board[:, 14] + score_board[:, 15]  # add all the scores together
-score_board = np.c_[score_board, sum_scores] # append the total on the end of the scoreboard (for checking reasons)
-sorted_scores = score_board[np.argsort(sum_scores)][::-1] # sort the carers by total score
-print("\n\n\n FINAL SORTED SCORES")
-print(sorted_scores)
-sorted_scores = np.vstack((['id', 'first_name', 'last_name', 'num_reviews', 'avg_review',
-'img_problems', 'type', 'num_previous_clients', 'days_since_login', 'age', 'years_experience', "total_score"], sorted_scores[:, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 16]]))
-np.savetxt("Best_carers_scoresheet.csv", sorted_scores, delimiter=",", fmt="%s") # save final scores in file
+    # Combine to make a big scoreboard and sort by best score
+    def calc_final_score(self, years, review, clients, days, image):
+        print(np.ndim(np.array(self.carer_data[['id', 'first_name',
+                                       'last_name', 'num_reviews',
+                                       'avg_review', 'img_problems', 'type',
+                                       'num_previous_clients',
+                                       'days_since_login', 'age',
+                                       'years_experience']])))
+        score_board = np.c_[np.array(self.carer_data[['id', 'first_name',
+                                       'last_name', 'num_reviews',
+                                       'avg_review', 'img_problems', 'type',
+                                       'num_previous_clients',
+                                       'days_since_login', 'age',
+                                       'years_experience']]), years]
+        """score_board = np.hstack(
+            (np.array(self.carer_data[['id', 'first_name',
+                                       'last_name', 'num_reviews',
+                                       'avg_review', 'img_problems', 'type',
+                                       'num_previous_clients',
+                                       'days_since_login', 'age',
+                                       'years_experience']]),
+             years, review, clients, days, image))"""
+
+        # From this, calculate the total score and sort by score
+        sum_scores = score_board[:, 11] + score_board[:, 12] + score_board[:, 13] + score_board[:, 14] + score_board[:, 15]
+        # append the total on the end of the scoreboard (for checking reasons)
+        score_board = np.c_[score_board, sum_scores]
+        # sort the carers by total score
+        sorted_scores = score_board[np.argsort(sum_scores)][::-1]
+        sorted_scores = np.vstack((['id', 'first_name', 'last_name', 'num_reviews',
+                                    'avg_review', 'img_problems', 'type', 'num_previous_clients', 'days_since_login', 
+                                    'age', 'years_experience', "total_score"],
+                                  sorted_scores[:, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 16]]))
+        print("\n\n\n FINAL SORTED SCORES")
+        print(sorted_scores)
+        # save final scores in file
+        np.savetxt("Best_carers_scoresheet.csv",
+                   sorted_scores,
+                   delimiter=",",
+                   fmt="%s")
+
+
+if __name__ == "__main__":
+    carer_scorer = CarerScorer()
+    carer_scorer.calc_years_experience()
+    carer_scorer.calc_average_review()
+    carer_scorer.calc_num_prev_clients()
+    carer_scorer.calc_days_since_logon()
+    carer_scorer.calc_image_problems()
+    carer_scorer.calc_final_score(carer_scorer.calc_years_experience,
+                                  carer_scorer.calc_average_review,
+                                  carer_scorer.calc_num_prev_clients,
+                                  carer_scorer.calc_days_since_logon,
+                                  carer_scorer.calc_image_problems)
