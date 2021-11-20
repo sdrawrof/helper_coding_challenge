@@ -129,25 +129,19 @@ class CarerScorer:
     # Combine to make a big scoreboard and sort by best score
     def calc_final_score(self, years, review, clients, days, image):
         print(np.ndim(np.array(self.carer_data[['id', 'first_name',
-                                       'last_name', 'num_reviews',
-                                       'avg_review', 'img_problems', 'type',
-                                       'num_previous_clients',
-                                       'days_since_login', 'age',
-                                       'years_experience']])))
-        score_board = np.c_[np.array(self.carer_data[['id', 'first_name',
-                                       'last_name', 'num_reviews',
-                                       'avg_review', 'img_problems', 'type',
-                                       'num_previous_clients',
-                                       'days_since_login', 'age',
-                                       'years_experience']]), years]
-        """score_board = np.hstack(
+                                                'last_name', 'num_reviews',
+                                                'avg_review', 'img_problems', 'type',
+                                                'num_previous_clients',
+                                                'days_since_login', 'age',
+                                                'years_experience']])))
+        score_board = np.hstack(
             (np.array(self.carer_data[['id', 'first_name',
                                        'last_name', 'num_reviews',
                                        'avg_review', 'img_problems', 'type',
                                        'num_previous_clients',
                                        'days_since_login', 'age',
                                        'years_experience']]),
-             years, review, clients, days, image))"""
+             years, review, clients, days, image))
 
         # From this, calculate the total score and sort by score
         sum_scores = score_board[:, 11] + score_board[:, 12] + score_board[:, 13] + score_board[:, 14] + score_board[:, 15]
@@ -155,10 +149,13 @@ class CarerScorer:
         score_board = np.c_[score_board, sum_scores]
         # sort the carers by total score
         sorted_scores = score_board[np.argsort(sum_scores)][::-1]
-        sorted_scores = np.vstack((['id', 'first_name', 'last_name', 'num_reviews',
-                                    'avg_review', 'img_problems', 'type', 'num_previous_clients', 'days_since_login', 
+        sorted_scores = np.vstack((['id', 'first_name', 'last_name',
+                                    'num_reviews',
+                                    'avg_review', 'img_problems', 'type', 
+                                    'num_previous_clients', 'days_since_login',
                                     'age', 'years_experience', "total_score"],
-                                  sorted_scores[:, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 16]]))
+                                  sorted_scores[:, [0, 1, 2, 3, 4, 5, 6, 7, 8, 
+                                                9, 10, 16]]))
         print("\n\n\n FINAL SORTED SCORES")
         print(sorted_scores)
         # save final scores in file
@@ -170,13 +167,8 @@ class CarerScorer:
 
 if __name__ == "__main__":
     carer_scorer = CarerScorer()
-    carer_scorer.calc_years_experience()
-    carer_scorer.calc_average_review()
-    carer_scorer.calc_num_prev_clients()
-    carer_scorer.calc_days_since_logon()
-    carer_scorer.calc_image_problems()
-    carer_scorer.calc_final_score(carer_scorer.calc_years_experience,
-                                  carer_scorer.calc_average_review,
-                                  carer_scorer.calc_num_prev_clients,
-                                  carer_scorer.calc_days_since_logon,
-                                  carer_scorer.calc_image_problems)
+    carer_scorer.calc_final_score(carer_scorer.calc_years_experience(),
+                                  carer_scorer.calc_average_review(),
+                                  carer_scorer.calc_num_prev_clients(),
+                                  carer_scorer.calc_days_since_logon(),
+                                  carer_scorer.calc_image_problems())
