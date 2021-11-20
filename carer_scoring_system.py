@@ -37,8 +37,10 @@ from sklearn.preprocessing import StandardScaler
 
 
 class CarerScorer:
-    carer_data = pd.read_csv("data.csv")
     min_max_scaler = preprocessing.MinMaxScaler()
+
+    def __init__(self, file_name):
+        self.carer_data = pd.read_csv(file_name)
 
     # YEARS OF EXPERIENCE
     # Years of experience are converted into a score out of 100
@@ -166,7 +168,7 @@ class CarerScorer:
 
 
 if __name__ == "__main__":
-    carer_scorer = CarerScorer()
+    carer_scorer = CarerScorer("data.csv")
     carer_scorer.calc_final_score(carer_scorer.calc_years_experience(),
                                   carer_scorer.calc_average_review(),
                                   carer_scorer.calc_num_prev_clients(),
