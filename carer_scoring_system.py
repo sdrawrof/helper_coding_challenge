@@ -39,8 +39,11 @@ from sklearn.preprocessing import StandardScaler
 class CarerScorer:
     min_max_scaler = preprocessing.MinMaxScaler()
 
-    def __init__(self, file_name):
-        self.carer_data = pd.read_csv(file_name)
+    def __init__(self, file_string):
+        if file_string.endswith('.csv') is False:
+            raise IOError("Carer data must be in .csv format")
+        else:
+            self.carer_data = pd.read_csv(file_string)
 
     # YEARS OF EXPERIENCE
     # Years of experience are converted into a score out of 100
@@ -130,6 +133,10 @@ class CarerScorer:
 
     # Combine to make a big scoreboard and sort by best score
     def calc_final_score(self, years, review, clients, days, image):
+        check_args = [years, review, clients, days, image]
+        for c in check_args:
+            if type(c) is not np.ndarray:
+                raise TypeError("score " + c + "is incorrectly calculated")
         print(np.ndim(np.array(self.carer_data[['id', 'first_name',
                                                 'last_name', 'num_reviews',
                                                 'avg_review', 'img_problems', 'type',
@@ -158,13 +165,17 @@ class CarerScorer:
                                     'age', 'years_experience', "total_score"],
                                   sorted_scores[:, [0, 1, 2, 3, 4, 5, 6, 7, 8, 
                                                 9, 10, 16]]))
-        print("\n\n\n FINAL SORTED SCORES")
-        print(sorted_scores)
+        # print("\n\n\n FINAL SORTED SCORES")
+        # print(sorted_scores)
         # save final scores in file
         np.savetxt("Best_carers_scoresheet.csv",
                    sorted_scores,
                    delimiter=",",
                    fmt="%s")
+        if pd.read_csv("Best_carers_scoresheet.csv").empty:
+            raise IOError("final data failed to be created in csv format")
+        else:
+            return(sorted_scores)
 
 
 if __name__ == "__main__":
