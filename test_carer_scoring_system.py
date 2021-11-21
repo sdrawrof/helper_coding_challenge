@@ -1,3 +1,4 @@
+# Testing class for carer_scoring_system.py
 import unittest
 from carer_scoring_system import CarerScorer
 import numpy as np

@@ -1,6 +1,5 @@
-# 
+#
 # Written by Adia-May Macheny for the Helper.Community Coding Challenge
-# 
 # Two Errors in the data were identified. There were:
 #  1. Some carers have an average review despite number of reviews being zero.
 #     To reduce the impact of this on data I reduce carers with no reviews by
@@ -8,26 +7,15 @@
 #     although in relaity this may need to be mdofied further.
 #  2. Number of reviews is sometimes higher than number of previous clients.
 #
-# 
-#  #### Notes to organise later! ######
 # The fields included as values are all independent, and the rest of the fields
-#  are dependent on these ones
+# are dependent on, or modify these ones. The ones not included at all
+# (age, name) do not represent the quality of a carer
+#
 # I decided on the values based on imprtance of each field by research, and by
 # comparing fields to each other based on the number of edge cases.
 # e.g. A user with many years of experience but a low no of previous clients is
-#  still good.
-# Meaning years experince is significantly more important that no of previous
-#  clients on the app.
-# For some fields, the differnce between values is not that important. If these
-#  fields need to be used to affect other values
-# (e.g. ) num previous clients determines whether the days since last logon is
-# a red flag. But we only need to know whether they have 0 previous clients.
-# Becuase if the nad no previous clients, and havent logged on in moths, they
-# are a much worse fit that someone who has at least had a client, no matter
-#  how long ago they logged on
-
-# REMOVE EXTRA UNNORMALISED VARIABLES IF NOT NEEDED
-
+#  better than the opposite, meaning years experince is more important that
+# no of previous clients.
 
 import pandas as pd
 import numpy as np
@@ -53,11 +41,11 @@ class CarerScorer:
             (len(self.carer_data['years_experience']), 1))
         # fit and then normalise values, then * 100 for score
         n_years_exp = self.min_max_scaler.fit_transform(years_exp) * 100
-        print(np.ndim(n_years_exp))
         return(n_years_exp)
 
     # AVERAGE REVIEW
-    # Scored out of 100. See above notes for mitigation for users with zero number of reviews
+    # Scored out of 100. See above notes for mitigation for users with
+    # zero number of reviews
     def calc_average_review(self):
         # extract average reviews and number of reviews columns
         avg_num_reviews = np.array(self.carer_data[['num_reviews', 'avg_review']])
@@ -69,7 +57,6 @@ class CarerScorer:
             np.array(avg_num_reviews[:, 1]).reshape(
                 (len(avg_num_reviews[:, 1]),
                  1)))*100
-        print(np.ndim(n_average_rev))
         return(n_average_rev)
 
     # NUMBER OF PREVIOUS CLIENTS
@@ -82,7 +69,6 @@ class CarerScorer:
             (len(self.carer_data['num_previous_clients']), 1))
         # fit and normalise values, and then multiply by 50
         n_num_previous_cli = self.min_max_scaler.fit_transform(num_prev_clients) * 50
-        print(np.ndim(n_num_previous_cli))
         return(n_num_previous_cli)
 
     # DAYS SINCE LAST LOGON
@@ -90,7 +76,8 @@ class CarerScorer:
     # Data is modifies according to the number of previous clients to create
     # a greater disparity between those who have logged in a while ago
     # due to having current clients,
-    # and those who have had no clients and have likely not logged in since signing up
+    # and those who have had no clients and have likely not logged in since
+    # signing up
     def calc_days_since_logon(self):
         # extract days since logon column
         days_since_log = np.array(self.carer_data['days_since_login'])
@@ -98,7 +85,8 @@ class CarerScorer:
         mean_login = np.mean(days_since_log)
         three_quart_percentile = np.percentile(days_since_log, 75)
         days_prev_clients = np.array(self.carer_data[['num_previous_clients', 'days_since_login']])
-        # If no of previous clients is 0 and logon time is above agerage, double the days since logon
+        # If no of previous clients is 0 and logon time is above average,
+        # double the days since logon
         days_prev_clients[np.logical_and(days_prev_clients[:, 0] == 0,
                           days_prev_clients[:, 1] > mean_login,
                           days_prev_clients[:, 1] <= three_quart_percentile), 1] = days_prev_clients[
@@ -108,8 +96,9 @@ class CarerScorer:
                                    days_prev_clients[:, 1] <= three_quart_percentile
                                ),
                                1] * 2
-        # If no of previous clients is 0 and logon time is above 75%, quadruple the days since logon
-        days_prev_clients[np.logical_and(days_prev_clients[:, 0] == 0, 
+        # If no of previous clients is 0 and logon time is above 75%, quadruple 
+        # the days since logon
+        days_prev_clients[np.logical_and(days_prev_clients[:, 0] == 0,
                           days_prev_clients[:, 1] > three_quart_percentile), 1] = days_prev_clients[
                               np.logical_and(
                                   days_prev_clients[:, 0] == 0,
@@ -118,7 +107,6 @@ class CarerScorer:
         n_days_since_log = (1 - self.min_max_scaler.fit_transform(
                           days_prev_clients[:, 1].reshape(len(days_prev_clients[:, 1]), 1)
                           )) * 25
-        print(np.ndim(n_days_since_log))
         return(n_days_since_log)
 
     # IMAGE PROBLEMS
@@ -128,7 +116,6 @@ class CarerScorer:
             self.carer_data['img_problems']).reshape(
                 (len(self.carer_data['img_problems']), 1))
         n_image_probs = (1 - self.min_max_scaler.fit_transform(img_problems)) * 25
-        print(np.ndim(n_image_probs))
         return n_image_probs
 
     # Combine to make a big scoreboard and sort by best score
@@ -137,12 +124,6 @@ class CarerScorer:
         for c in check_args:
             if type(c) is not np.ndarray:
                 raise TypeError("score " + c + "is incorrectly calculated")
-        print(np.ndim(np.array(self.carer_data[['id', 'first_name',
-                                                'last_name', 'num_reviews',
-                                                'avg_review', 'img_problems', 'type',
-                                                'num_previous_clients',
-                                                'days_since_login', 'age',
-                                                'years_experience']])))
         score_board = np.hstack(
             (np.array(self.carer_data[['id', 'first_name',
                                        'last_name', 'num_reviews',
@@ -153,20 +134,19 @@ class CarerScorer:
              years, review, clients, days, image))
 
         # From this, calculate the total score and sort by score
-        sum_scores = score_board[:, 11] + score_board[:, 12] + score_board[:, 13] + score_board[:, 14] + score_board[:, 15]
+        sum_scores = score_board[:, 11] + score_board[:, 12] + score_board[:, 13]
+        + score_board[:, 14] + score_board[:, 15]
         # append the total on the end of the scoreboard (for checking reasons)
         score_board = np.c_[score_board, sum_scores]
         # sort the carers by total score
         sorted_scores = score_board[np.argsort(sum_scores)][::-1]
         sorted_scores = np.vstack((['id', 'first_name', 'last_name',
                                     'num_reviews',
-                                    'avg_review', 'img_problems', 'type', 
+                                    'avg_review', 'img_problems', 'type',
                                     'num_previous_clients', 'days_since_login',
                                     'age', 'years_experience', "total_score"],
-                                  sorted_scores[:, [0, 1, 2, 3, 4, 5, 6, 7, 8, 
+                                  sorted_scores[:, [0, 1, 2, 3, 4, 5, 6, 7, 8,
                                                 9, 10, 16]]))
-        # print("\n\n\n FINAL SORTED SCORES")
-        # print(sorted_scores)
         # save final scores in file
         np.savetxt("Best_carers_scoresheet.csv",
                    sorted_scores,
