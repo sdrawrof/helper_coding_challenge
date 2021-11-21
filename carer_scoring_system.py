@@ -1,18 +1,18 @@
 #
-# Written by Adia-May Macheny for the Helper.Community Coding Challenge
+# Written by Adia-May Macheny for the Helper.Community Coding Challenge!
 # Two Errors in the data were identified. There were:
 #  1. Some carers have an average review despite number of reviews being zero.
 #     To reduce the impact of this on data I reduce carers with no reviews by
 #     1 star,
-#     although in relaity this may need to be mdofied further.
+#     although in reaity this may need to be mdofied further.
 #  2. Number of reviews is sometimes higher than number of previous clients.
 #
 # The fields included as values are all independent, and the rest of the fields
 # are dependent on, or modify these ones. The ones not included at all
 # (age, name) do not represent the quality of a carer
 #
-# I decided on the values based on imprtance of each field by research, and by
-# comparing fields to each other based on the number of edge cases.
+# I decided on the values based on imprtance of each field by my own research,
+# and by comparing fields to each other based on the number of edge cases.
 # e.g. A user with many years of experience but a low no of previous clients is
 #  better than the opposite, meaning years experince is more important that
 # no of previous clients.
